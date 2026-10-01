@@ -1,4 +1,3 @@
-
 services:
   postgres:
     image: postgres:16
@@ -8,7 +7,7 @@ services:
     environment:
       POSTGRES_DB: premier_league_predictions
       POSTGRES_USER: plp_user
-      POSTGRES_PASSWORD: 1234
+      POSTGRES_PASSWORD: plp_password
 
     ports:
       - "5432:5432"
@@ -30,18 +29,15 @@ services:
       postgres:
         condition: service_healthy
 
-    command:
-      - -url=jdbc:postgresql://postgres:5432/premier_league_predictions
-      - -user=plp_user
-      - -password=1234
-      - -connectRetries=60
-      - migrate
+    environment:
+      FLYWAY_URL: jdbc:postgresql://postgres:5432/premier_league_predictions
+      FLYWAY_USER: plp_user
+      FLYWAY_PASSWORD: plp_password
+
+    command: migrate
 
     volumes:
       - ./database/migrations:/flyway/sql
 
-
 volumes:
   postgres_data:
-
-
