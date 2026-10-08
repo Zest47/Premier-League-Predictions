@@ -1,0 +1,22 @@
+INSERT INTO teams (name) VALUES
+    ('AFC Bournemouth'),
+    ('Arsenal'),
+    ('Aston Villa'),
+    ('Brentford'),
+    ('Brighton & Hove Albion'),
+    ('Chelsea'),
+    ('Coventry City'),
+    ('Crystal Palace'),
+    ('Everton'),
+    ('Fulham'),
+    ('Hull City'),
+    ('Ipswich Town'),
+    ('Leeds United'),
+    ('Liverpool'),
+    ('Manchester City'),
+    ('Manchester United'),
+    ('Newcastle United'),
+    ('Nottingham Forest'),
+    ('Sunderland'),
+    ('Tottenham Hotspur')
+ON CONFLICT (name) DO NOTHING;
