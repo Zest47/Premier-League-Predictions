@@ -23,6 +23,18 @@ public class MatchController {
         return matchService.findAll();
     }
 
+    @GetMapping("/upcoming")
+    public List<MatchResponse> findUpcoming() {
+        return matchService.findUpcomingMatches();
+    }
+
+    @GetMapping("/gameweek/{gameweek}")
+    public List<MatchResponse> findByGameweek(
+            @PathVariable Integer gameweek
+    ) {
+        return matchService.findByGameweek(gameweek);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<MatchResponse> findById(
             @PathVariable Long id

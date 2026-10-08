@@ -2,9 +2,11 @@ package prediction_service.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import prediction_service.dto.MatchResponse;
 import prediction_service.repository.MatchRepository;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,5 +31,32 @@ public class MatchService {
     public Optional<MatchResponse> findById(Long id) {
         return matchRepository.findById(id)
                 .map(MatchResponse::new);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MatchResponse> findByGameweek(Integer gameweek) {
+
+        if (gameweek == null || gameweek < 1) {
+            throw new IllegalArgumentException("Invalid gameweek");
+        }
+
+        return matchRepository
+                .findByGameweekOrderByStartDateAsc(gameweek)
+                .stream()
+                .map(MatchResponse::new)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<MatchResponse> findUpcomingMatches() {
+
+        return matchRepository
+                .findByStartDateAfterAndStatusOrderByStartDateAsc(
+                        OffsetDateTime.now(),
+                        "SCHEDULED"
+                )
+                .stream()
+                .map(MatchResponse::new)
+                .toList();
     }
 }
