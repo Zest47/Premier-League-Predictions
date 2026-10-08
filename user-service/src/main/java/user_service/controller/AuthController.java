@@ -4,8 +4,9 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import user_service.dto.LoginRequest;
-import user_service.dto.UserResponse;
+import user_service.dto.LoginResponse;
 import user_service.entity.User;
+import user_service.repository.UserRepository;
 import user_service.service.AuthService;
 
 @RestController
@@ -13,20 +14,36 @@ import user_service.service.AuthService;
 public class AuthController {
 
     private final AuthService authService;
+    private final UserRepository userRepository;
 
-    public AuthController(AuthService authService) {
+    public AuthController(
+            AuthService authService,
+            UserRepository userRepository
+    ) {
         this.authService = authService;
+        this.userRepository = userRepository;
     }
 
     @PostMapping("/login")
-    public ResponseEntity<UserResponse> login(
+    public ResponseEntity<LoginResponse> login(
             @Valid @RequestBody LoginRequest request
     ) {
-        User user = authService.login(
+
+        String token = authService.login(
                 request.getUsername(),
                 request.getPassword()
         );
 
-        return ResponseEntity.ok(new UserResponse(user));
+        User user = userRepository.findByUsername(request.getUsername())
+                .orElseThrow();
+
+        LoginResponse response = new LoginResponse(
+                token,
+                user.getId(),
+                user.getUsername(),
+                user.getRole().name()
+        );
+
+        return ResponseEntity.ok(response);
     }
 }
