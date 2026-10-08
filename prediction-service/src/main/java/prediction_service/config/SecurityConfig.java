@@ -6,6 +6,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.http.HttpMethod;
 
 @Configuration
 @EnableWebSecurity
@@ -27,6 +28,8 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/health").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/teams", "/api/teams/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/matches", "/api/matches/**").permitAll()
                 .anyRequest().denyAll()
             );
 

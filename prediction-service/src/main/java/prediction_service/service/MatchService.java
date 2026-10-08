@@ -1,0 +1,33 @@
+package prediction_service.service;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import prediction_service.dto.MatchResponse;
+import prediction_service.repository.MatchRepository;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class MatchService {
+
+    private final MatchRepository matchRepository;
+
+    public MatchService(MatchRepository matchRepository) {
+        this.matchRepository = matchRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public List<MatchResponse> findAll() {
+        return matchRepository.findAll()
+                .stream()
+                .map(MatchResponse::new)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<MatchResponse> findById(Long id) {
+        return matchRepository.findById(id)
+                .map(MatchResponse::new);
+    }
+}

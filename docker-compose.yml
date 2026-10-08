@@ -21,23 +21,5 @@ services:
       timeout: 5s
       retries: 5
 
-  flyway:
-    image: flyway/flyway:10
-    container_name: plp-flyway
-
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-    environment:
-      FLYWAY_URL: jdbc:postgresql://postgres:5432/premier_league_predictions
-      FLYWAY_USER: plp_user
-      FLYWAY_PASSWORD: plp_password
-
-    command: migrate
-
-    volumes:
-      - ./database/migrations:/flyway/sql
-
 volumes:
   postgres_data:
