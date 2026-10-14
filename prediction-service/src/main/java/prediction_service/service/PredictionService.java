@@ -9,6 +9,7 @@ import prediction_service.entity.Match;
 import prediction_service.entity.Prediction;
 import prediction_service.repository.MatchRepository;
 import prediction_service.repository.PredictionRepository;
+import prediction_service.dto.UpdatePredictionRequest;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -68,6 +69,12 @@ public class PredictionService {
             );
         }
 
+        if (!"SCHEDULED".equals(match.getStatus())) {
+                throw new IllegalStateException(
+                        "Match is not open for predictions"
+                );
+        }
+
         Prediction prediction = new Prediction();
 
         prediction.setUserId(userId);
@@ -90,4 +97,61 @@ public class PredictionService {
                 .map(PredictionResponse::new)
                 .toList();
     }
+
+    @Transactional
+        public PredictionResponse updatePrediction(
+                Long userId,
+                Long predictionId,
+                UpdatePredictionRequest request
+        ) {
+
+        // 1. Récupérer le pronostic
+        Prediction prediction = predictionRepository.findById(predictionId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Prediction not found")
+                );
+
+        // 2. Vérifier que l'utilisateur est propriétaire
+        if (!prediction.getUserId().equals(userId)) {
+                throw new SecurityException(
+                        "You cannot modify another user's prediction"
+                );
+        }
+
+        // 3. Récupérer le match
+        Match match = prediction.getMatch();
+
+        // 4. Vérifier le statut du match
+        if (!"SCHEDULED".equals(match.getStatus())) {
+                throw new IllegalStateException(
+                        "Match is not open for predictions"
+                );
+        }
+
+        // 5. Calculer la date limite de la journée
+        OffsetDateTime firstMatchDate = matchRepository
+                .findByGameweekOrderByStartDateAsc(match.getGameweek())
+                .stream()
+                .map(Match::getStartDate)
+                .findFirst()
+                .orElseThrow();
+
+        OffsetDateTime deadline = firstMatchDate.minusHours(1);
+
+        if (!OffsetDateTime.now().isBefore(deadline)) {
+                throw new IllegalStateException(
+                        "Prediction deadline has passed"
+                );
+        }
+
+        // 6. Mettre à jour les scores
+        prediction.setPredictedHomeScore(request.homeScore());
+        prediction.setPredictedAwayScore(request.awayScore());
+        prediction.setUpdatedAt(OffsetDateTime.now());
+
+        // 7. Sauvegarder
+        Prediction updatedPrediction = predictionRepository.save(prediction);
+
+        return new PredictionResponse(updatedPrediction);
+        }
 }

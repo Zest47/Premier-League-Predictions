@@ -2,65 +2,52 @@ package user_service.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Service
 public class JwtService {
 
-    private static final String SECRET_KEY =
-            "plp-super-secret-key-for-jwt-authentication-2026-very-long-key";
+    @Value("${jwt.secret}")
+    private String secret;
 
-    private static final long EXPIRATION_TIME =
-            1000 * 60 * 60; // 1 heure
+    private static final long EXPIRATION_TIME = 1000L * 60 * 60;
 
     private SecretKey getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(
-                java.util.Base64.getEncoder()
-                        .encodeToString(SECRET_KEY.getBytes())
+        return Keys.hmacShaKeyFor(
+                secret.getBytes(StandardCharsets.UTF_8)
         );
-
-        return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateToken(String username) {
-
+    public String generateToken(Long userId, String username) {
         return Jwts.builder()
                 .subject(username)
+                .claim("userId", userId)
                 .issuedAt(new Date())
-                .expiration(
-                        new Date(System.currentTimeMillis() + EXPIRATION_TIME)
-                )
+                .expiration(new Date(
+                        System.currentTimeMillis() + EXPIRATION_TIME
+                ))
                 .signWith(getSigningKey())
                 .compact();
     }
 
     public String extractUsername(String token) {
-
         return getClaims(token).getSubject();
     }
 
     public boolean isTokenValid(String token, String username) {
+        Claims claims = getClaims(token);
 
-        String extractedUsername = extractUsername(token);
-
-        return extractedUsername.equals(username)
-                && !isTokenExpired(token);
-    }
-
-    private boolean isTokenExpired(String token) {
-
-        return getClaims(token)
-                .getExpiration()
-                .before(new Date());
+        return username.equals(claims.getSubject())
+                && claims.getExpiration().after(new Date());
     }
 
     private Claims getClaims(String token) {
-
         return Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
