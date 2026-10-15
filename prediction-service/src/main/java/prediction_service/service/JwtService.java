@@ -36,6 +36,10 @@ public class JwtService {
         return userId.longValue();
     }
 
+    public String extractRole(String token) {
+        return getClaims(token).get("role", String.class);
+    }
+
     public boolean isTokenValid(String token) {
         Claims claims = getClaims(token);
 
@@ -43,6 +47,7 @@ public class JwtService {
                 && !claims.getSubject().isBlank()
                 && claims.getExpiration() != null
                 && claims.getExpiration().after(new Date())
+                && claims.get("role", String.class) != null
                 && claims.get("userId", Number.class) != null;
     }
 

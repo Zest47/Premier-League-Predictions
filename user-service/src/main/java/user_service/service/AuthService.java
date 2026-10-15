@@ -2,9 +2,11 @@ package user_service.service;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
 import user_service.entity.User;
 import user_service.exception.InvalidCredentialsException;
 import user_service.repository.UserRepository;
+import user_service.dto.LoginResponse;
 
 @Service
 public class AuthService {
@@ -43,7 +45,8 @@ public class AuthService {
 
         return jwtService.generateToken(
                 user.getId(),
-                user.getUsername()
+                user.getUsername(),
+                user.getRole().name()
         );
     }
 }

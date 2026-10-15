@@ -11,6 +11,10 @@ public interface PredictionRepository
 
     List<Prediction> findByUserId(Long userId);
 
+    List<Prediction> findByMatch_StatusAndMatch_HomeScoreIsNotNullAndMatch_AwayScoreIsNotNull(
+                String status
+        );
+
     Optional<Prediction> findByUserIdAndMatchId(
             Long userId,
             Long matchId

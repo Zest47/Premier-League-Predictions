@@ -5,6 +5,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import prediction_service.dto.MatchResponse;
 import prediction_service.repository.MatchRepository;
+import prediction_service.dto.UpdateMatchResultRequest;
+import prediction_service.entity.Match;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -45,6 +47,32 @@ public class MatchService {
                 .stream()
                 .map(MatchResponse::new)
                 .toList();
+    }
+
+    @Transactional
+    public MatchResponse updateMatchResult(
+            Long matchId,
+            UpdateMatchResultRequest request
+    ) {
+        Match match = matchRepository.findById(matchId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Match not found")
+                );
+
+        if (!"SCHEDULED".equals(match.getStatus())
+                && !"LIVE".equals(match.getStatus())) {
+            throw new IllegalStateException(
+                    "Match result cannot be updated in its current status"
+            );
+        }
+
+        match.setHomeScore(request.homeScore());
+        match.setAwayScore(request.awayScore());
+        match.setStatus("FINISHED");
+
+        Match updatedMatch = matchRepository.save(match);
+
+        return new MatchResponse(updatedMatch);
     }
 
     @Transactional(readOnly = true)

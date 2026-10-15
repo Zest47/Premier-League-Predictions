@@ -11,6 +11,7 @@ import prediction_service.dto.CreatePredictionRequest;
 import prediction_service.dto.PredictionResponse;
 import prediction_service.service.PredictionService;
 import prediction_service.dto.UpdatePredictionRequest;
+import prediction_service.dto.PredictionResultResponse;
 
 import java.util.List;
 
@@ -51,6 +52,16 @@ public class PredictionController {
                 predictionService.findByUserId(userId)
         );
     }
+    @GetMapping("/me/results")
+        public ResponseEntity<List<PredictionResultResponse>> findMyResults(
+                Authentication authentication
+        ) {
+        Long userId = (Long) authentication.getPrincipal();
+
+        return ResponseEntity.ok(
+                predictionService.findMyResults(userId)
+        );
+        }
     @PutMapping("/{id}")
     public ResponseEntity<PredictionResponse> update(
             @PathVariable Long id,

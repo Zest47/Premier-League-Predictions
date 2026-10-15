@@ -67,4 +67,15 @@ public class Match {
     public String getStatus() {
         return status;
     }
+    public void setHomeScore(Integer homeScore) {
+        this.homeScore = homeScore;
+    }
+
+    public void setAwayScore(Integer awayScore) {
+        this.awayScore = awayScore;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
 }

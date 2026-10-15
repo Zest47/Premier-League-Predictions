@@ -10,6 +10,7 @@ import prediction_service.entity.Prediction;
 import prediction_service.repository.MatchRepository;
 import prediction_service.repository.PredictionRepository;
 import prediction_service.dto.UpdatePredictionRequest;
+import prediction_service.dto.PredictionResultResponse;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -19,13 +20,16 @@ public class PredictionService {
 
     private final PredictionRepository predictionRepository;
     private final MatchRepository matchRepository;
+    private final PredictionScoringService predictionScoringService;
 
     public PredictionService(
             PredictionRepository predictionRepository,
-            MatchRepository matchRepository
+            MatchRepository matchRepository,
+            PredictionScoringService predictionScoringService
     ) {
         this.predictionRepository = predictionRepository;
         this.matchRepository = matchRepository;
+        this.predictionScoringService = predictionScoringService;
     }
 
     @Transactional
@@ -88,6 +92,43 @@ public class PredictionService {
                 predictionRepository.save(prediction)
         );
     }
+
+    @Transactional(readOnly = true)
+        public List<PredictionResultResponse> findMyResults(Long userId) {
+
+        return predictionRepository.findByUserId(userId)
+                .stream()
+                .map(prediction -> {
+
+                        Match match = prediction.getMatch();
+
+                        Integer points = null;
+
+                        if ("FINISHED".equals(match.getStatus())
+                                && match.getHomeScore() != null
+                                && match.getAwayScore() != null) {
+
+                        points = predictionScoringService.calculatePoints(
+                                prediction.getPredictedHomeScore(),
+                                prediction.getPredictedAwayScore(),
+                                match.getHomeScore(),
+                                match.getAwayScore()
+                        );
+                        }
+
+                        return new PredictionResultResponse(
+                                prediction.getId(),
+                                match.getId(),
+                                prediction.getPredictedHomeScore(),
+                                prediction.getPredictedAwayScore(),
+                                match.getHomeScore(),
+                                match.getAwayScore(),
+                                match.getStatus(),
+                                points
+                        );
+                })
+                .toList();
+        }
 
     @Transactional(readOnly = true)
     public List<PredictionResponse> findByUserId(Long userId) {

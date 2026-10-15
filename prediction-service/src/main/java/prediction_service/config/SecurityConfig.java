@@ -53,11 +53,18 @@ public class SecurityConfig {
                     "/api/matches", "/api/matches/**"
                 ).permitAll()
 
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/leaderboard"
+                ).permitAll()
+
                 .requestMatchers("/api/predictions/**")
                     .authenticated()
 
                 .requestMatchers("/api/predictions")
                     .authenticated()
+
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                 .anyRequest().denyAll()
             )
