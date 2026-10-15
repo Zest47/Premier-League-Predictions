@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react'
-import { CalendarDays } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
 
 import { getMatches } from '../services/api'
 import type { Match } from '../types/api'
@@ -9,27 +9,57 @@ export default function Matches() {
   const [matches, setMatches] = useState<Match[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedGameweek, setSelectedGameweek] = useState<number | null>(null)
 
-  useEffect(() => {
-    let active = true
+  
+    useEffect(() => {
+        let active = true
 
-    getMatches()
-      .then((data) => {
-        if (active) setMatches(data)
-      })
-      .catch(() => {
-        if (active) {
-          setError('Impossible de charger les rencontres.')
+        getMatches()
+        .then((data) => {
+            if (active) setMatches(data)
+        })
+        .catch(() => {
+            if (active) {
+            setError('Impossible de charger les rencontres.')
+            }
+        })
+        .finally(() => {
+            if (active) setLoading(false)
+        })
+
+        return () => {
+        active = false
         }
-      })
-      .finally(() => {
-        if (active) setLoading(false)
-      })
+    }, [])
 
-    return () => {
-      active = false
-    }
-  }, [])
+    // Liste des journées disponibles
+    const gameweeks = [...new Set(matches.map((match) => match.gameweek))]
+        .sort((a, b) => a - b)
+
+    // Journée sélectionnée (première journée par défaut)
+    const currentGameweek = selectedGameweek ?? gameweeks[0] ?? null
+
+    const currentGameweekIndex = gameweeks.findIndex(
+    (gameweek) => gameweek === currentGameweek
+    )
+
+    const previousGameweek =
+    currentGameweekIndex > 0
+        ? gameweeks[currentGameweekIndex - 1]
+        : null
+
+    const nextGameweek =
+    currentGameweekIndex >= 0 &&
+    currentGameweekIndex < gameweeks.length - 1
+        ? gameweeks[currentGameweekIndex + 1]
+        : null
+
+    // Matchs de la journée sélectionnée
+    const filteredMatches = matches.filter(
+        (match) => match.gameweek === currentGameweek
+    )
+
 
   return (
     <div className="space-y-6">
@@ -39,6 +69,53 @@ export default function Matches() {
           Calendrier des rencontres de Premier League.
         </p>
       </div>
+
+      
+    
+        {gameweeks.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-[#19232e] p-4">
+            <button
+            type="button"
+            disabled={previousGameweek === null}
+            onClick={() => setSelectedGameweek(previousGameweek)}
+            className="flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 font-semibold text-white transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-30"
+            >
+            <ChevronLeft size={18} />
+            <span className="hidden sm:inline">Précédente</span>
+            </button>
+
+            <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-400">
+                Journée
+            </span>
+
+            <select
+                value={currentGameweek ?? ''}
+                onChange={(event) =>
+                setSelectedGameweek(Number(event.target.value))
+                }
+                className="rounded-xl border border-white/10 bg-[#121a24] px-4 py-2 font-bold text-white outline-none focus:border-lime-400"
+            >
+                {gameweeks.map((gameweek) => (
+                <option key={gameweek} value={gameweek}>
+                    {gameweek}
+                </option>
+                ))}
+            </select>
+            </div>
+
+            <button
+            type="button"
+            disabled={nextGameweek === null}
+            onClick={() => setSelectedGameweek(nextGameweek)}
+            className="flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 font-semibold text-white transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-30"
+            >
+            <span className="hidden sm:inline">Suivante</span>
+            <ChevronRight size={18} />
+            </button>
+        </div>
+        )}
+
 
       {loading && (
         <p className="text-gray-400">Chargement des matchs...</p>
@@ -56,7 +133,7 @@ export default function Matches() {
 
       {!loading && !error && (
         <div className="space-y-4">
-          {matches.map((match) => (
+          {filteredMatches.map((match) => (
             <div
               key={match.id}
               className="rounded-2xl border border-white/5 bg-[#19232e] p-6"

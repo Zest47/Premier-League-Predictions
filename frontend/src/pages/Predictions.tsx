@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { Target, Trophy } from 'lucide-react'
+import { Target, Trophy, ChevronLeft, ChevronRight } from 'lucide-react'
 
 import { useAuth } from '../context/useAuth'
 
@@ -40,6 +40,7 @@ export default function Predictions() {
   const [editHomeScore, setEditHomeScore] = useState('0')
   const [editAwayScore, setEditAwayScore] = useState('0')
   const [updating, setUpdating] = useState(false)
+  const [selectedGameweek, setSelectedGameweek] = useState<number | null>(null)
 
   type PredictionTab = 'available' | 'mine' | 'results'
 
@@ -191,6 +192,29 @@ export default function Predictions() {
     0
   )
 
+  
+  // Journées disponibles
+  const gameweeks = [...new Set(matches.map((match) => match.gameweek))]
+    .sort((a, b) => a - b)
+
+  // Journée sélectionnée
+  const currentGameweek = selectedGameweek ?? gameweeks[0] ?? null
+
+  const currentGameweekIndex = gameweeks.findIndex(
+    (gameweek) => gameweek === currentGameweek
+    )
+
+    const previousGameweek =
+    currentGameweekIndex > 0
+        ? gameweeks[currentGameweekIndex - 1]
+        : null
+
+    const nextGameweek =
+    currentGameweekIndex >= 0 &&
+    currentGameweekIndex < gameweeks.length - 1
+        ? gameweeks[currentGameweekIndex + 1]
+        : null
+
   const predictedMatchIds = new Set(
    predictions.map((prediction) => prediction.matchId)
   )
@@ -198,6 +222,7 @@ export default function Predictions() {
   const availableMatches = matches
   .filter(
     (match) =>
+      match.gameweek === currentGameweek &&
       match.status === 'SCHEDULED' &&
       !predictedMatchIds.has(match.id) &&
       !isGameweekLocked(matches, match.gameweek)
@@ -208,15 +233,25 @@ export default function Predictions() {
       new Date(b.startDate).getTime()
   )
 
-  const activePredictions = predictions.filter((prediction) => {
+  
+    const activePredictions = predictions.filter((prediction) => {
     const match = matches.find((item) => item.id === prediction.matchId)
-    return match?.status !== 'FINISHED'
-  })
 
-  const finishedPredictions = predictions.filter((prediction) => {
+    return (
+        match?.gameweek === currentGameweek &&
+        match.status !== 'FINISHED'
+    )
+    })
+
+    const finishedPredictions = predictions.filter((prediction) => {
     const match = matches.find((item) => item.id === prediction.matchId)
-    return match?.status === 'FINISHED'
-  })
+
+    return (
+        match?.gameweek === currentGameweek &&
+        match.status === 'FINISHED'
+    )
+    })
+
 
   const displayedPredictions =
   activeTab === 'mine'
@@ -275,6 +310,68 @@ export default function Predictions() {
               </p>
             </div>
           </section>
+
+          
+            
+        {gameweeks.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-[#19232e] p-4">
+            <button
+            type="button"
+            disabled={previousGameweek === null}
+            onClick={() => {
+                setSelectedGameweek(previousGameweek)
+                setSelectedMatchId(null)
+                setEditingPredictionId(null)
+                setError(null)
+                setSuccess(null)
+            }}
+            className="flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 font-semibold text-white transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-30"
+            >
+            <ChevronLeft size={18} />
+            <span className="hidden sm:inline">Précédente</span>
+            </button>
+
+            <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-400">
+                Journée
+            </span>
+
+            <select
+                value={currentGameweek ?? ''}
+                onChange={(event) => {
+                setSelectedGameweek(Number(event.target.value))
+                setSelectedMatchId(null)
+                setEditingPredictionId(null)
+                setError(null)
+                setSuccess(null)
+                }}
+                className="rounded-xl border border-white/10 bg-[#121a24] px-4 py-2 font-bold text-white outline-none focus:border-lime-400"
+            >
+                {gameweeks.map((gameweek) => (
+                <option key={gameweek} value={gameweek}>
+                    {gameweek}
+                </option>
+                ))}
+            </select>
+            </div>
+
+            <button
+            type="button"
+            disabled={nextGameweek === null}
+            onClick={() => {
+                setSelectedGameweek(nextGameweek)
+                setSelectedMatchId(null)
+                setEditingPredictionId(null)
+                setError(null)
+                setSuccess(null)
+            }}
+            className="flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 font-semibold text-white transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-30"
+            >
+            <span className="hidden sm:inline">Suivante</span>
+            <ChevronRight size={18} />
+            </button>
+        </div>
+        )}
 
           
             <div className="flex flex-wrap gap-2 border-b border-white/10 pb-4">

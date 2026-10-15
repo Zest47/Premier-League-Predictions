@@ -58,15 +58,49 @@ export default function AdminMatches() {
 
     if (editingMatchId === null || saving) return
 
+    const currentMatch = matches.find(
+        (match) => match.id === editingMatchId
+        )
+
+        if (currentMatch?.status === 'FINISHED') {
+        const confirmed = window.confirm(
+            `Attention : vous allez modifier le résultat de ` +
+            `${currentMatch.homeTeam.name} – ${currentMatch.awayTeam.name}.\n\n` +
+            `Ancien score : ${currentMatch.homeScore}–${currentMatch.awayScore}\n` +
+            `Nouveau score : ${homeScore}–${awayScore}\n\n` +
+            `Cette modification peut changer les points et le classement.\n\n` +
+            `Confirmer ?`
+        )
+
+        if (!confirmed) return
+        }
+
+    const parsedHomeScore = Number(homeScore)
+    const parsedAwayScore = Number(awayScore)
+
+    if (
+    homeScore.trim() === '' ||
+    awayScore.trim() === '' ||
+    !Number.isInteger(parsedHomeScore) ||
+    !Number.isInteger(parsedAwayScore) ||
+    parsedHomeScore < 0 ||
+    parsedAwayScore < 0 ||
+    parsedHomeScore > 30 ||
+    parsedAwayScore > 30
+    ) {
+    setError('Les scores doivent être des entiers entre 0 et 30.')
+    return
+    }
+
     setSaving(true)
     setError(null)
     setSuccess(null)
 
     try {
       await updateMatchResult(editingMatchId, {
-        homeScore: Number(homeScore),
-        awayScore: Number(awayScore),
-      })
+        homeScore: parsedHomeScore,
+        awayScore: parsedAwayScore,
+        })
 
       const updatedMatches = await getMatches()
       setMatches(updatedMatches)

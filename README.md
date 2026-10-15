@@ -1,3 +1,5 @@
+React + TypeScript / Tailwind css / Vite avec Lint
+
 # Premier League Predictions ⚽🏆
 
 > Application web orientée PC pour pronostiquer les résultats des matchs de la Premier League anglaise et s'affronter entre amis ou au sein de la communauté.

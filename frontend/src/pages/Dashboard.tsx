@@ -12,11 +12,22 @@ import {
 import { getMatches, getLeaderboard } from '../services/api'
 import type { Match, LeaderboardEntry } from '../types/api'
 
+import { useAuth } from '../context/useAuth'
+import { getMyPredictionResults } from '../services/api'
+import PlayerStats from '../components/PlayerStats'
+import type { PredictionResult } from '../types/api'
+import { getCurrentGameweek } from '../utils/currentGameweek'
+
 export default function Dashboard() {
   const [matches, setMatches] = useState<Match[]>([])
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const { user } = useAuth()
+
+  const [predictionResults, setPredictionResults] = useState<PredictionResult[]>([])
+  const [statsError, setStatsError] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
@@ -41,14 +52,33 @@ export default function Dashboard() {
     }
   }, [])
 
-  const upcomingMatches = matches
-    .filter((match) => match.status === 'SCHEDULED')
-    .sort(
-      (a, b) =>
-        new Date(a.startDate).getTime() -
-        new Date(b.startDate).getTime()
-    )
-    .slice(0, 3)
+  
+    useEffect(() => {
+    if (!user) return
+
+    let active = true
+
+    getMyPredictionResults()
+        .then((data) => {
+        if (active) {
+            setPredictionResults(data)
+            setStatsError(null)
+        }
+        })
+        .catch((err) => {
+        if (active) {
+            setStatsError(
+            err instanceof Error
+                ? err.message
+                : 'Impossible de charger les statistiques.'
+            )
+        }
+        })
+
+    return () => {
+        active = false
+    }
+    }, [user])
 
   const finishedMatches = matches
     .filter((match) => match.status === 'FINISHED')
@@ -81,6 +111,21 @@ export default function Dashboard() {
       icon: Target,
     },
   ]
+
+  const myLeaderboardEntry =
+  user
+    ? leaderboard.find((entry) => entry.userId === user.userId) ?? null
+    : null
+
+    const currentGameweek = getCurrentGameweek(matches)
+
+    const currentGameweekMatches = matches
+    .filter((match) => match.gameweek === currentGameweek)
+    .sort(
+        (a, b) =>
+        new Date(a.startDate).getTime() -
+        new Date(b.startDate).getTime()
+    )
 
   return (
     <div className="space-y-8">
@@ -144,7 +189,11 @@ export default function Dashboard() {
           <section className="grid gap-6 xl:grid-cols-2">
             <div className="rounded-2xl bg-[#19232e] p-6">
               <div className="mb-6 flex items-center justify-between gap-3">
-                <h2 className="text-xl font-bold">Prochains matchs</h2>
+                <h2 className="text-xl font-bold">
+                    {currentGameweek !== null
+                        ? `Journée ${currentGameweek} — Rencontres`
+                        : 'Rencontres'}
+                    </h2>
                 <Link
                   to="/matches"
                   className="text-sm text-lime-400 hover:underline"
@@ -153,36 +202,85 @@ export default function Dashboard() {
                 </Link>
               </div>
 
-              {upcomingMatches.length === 0 && (
+              {currentGameweekMatches.length === 0 && (
                 <p className="text-gray-400">
-                  Aucun prochain match disponible.
+                    Aucun match disponible pour cette journée.
                 </p>
-              )}
+                )}
 
               <div className="space-y-4">
-                {upcomingMatches.map((match) => (
-                  <div
-                    key={match.id}
-                    className="rounded-xl border border-white/5 bg-[#121a24] p-4"
-                  >
-                    <p className="mb-3 text-xs font-semibold text-lime-400">
-                      Journée {match.gameweek}
+                
+            {currentGameweekMatches.map((match) => {
+            const isFinished =
+                match.status === 'FINISHED' &&
+                match.homeScore !== null &&
+                match.awayScore !== null
+
+            return (
+                <div
+                key={match.id}
+                className="rounded-xl border border-white/5 bg-[#121a24] p-4"
+                >
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                    <span className="text-xs font-semibold text-lime-400">
+                    Journée {match.gameweek}
+                    </span>
+
+                    <span
+                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                        match.status === 'FINISHED'
+                        ? 'bg-lime-400/10 text-lime-400'
+                        : match.status === 'SCHEDULED'
+                            ? 'bg-blue-400/10 text-blue-300'
+                            : 'bg-amber-400/10 text-amber-300'
+                    }`}
+                    >
+                    {match.status === 'FINISHED'
+                        ? 'Terminé'
+                        : match.status === 'SCHEDULED'
+                        ? 'À venir'
+                        : match.status}
+                    </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1 space-y-2">
+                    <p className="font-semibold">
+                        {match.homeTeam.name}
                     </p>
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="font-semibold">
-                        <p>{match.homeTeam.name}</p>
-                        <p className="mt-2">{match.awayTeam.name}</p>
-                      </div>
-                      <span className="font-black text-gray-400">VS</span>
+
+                    <p className="font-semibold">
+                        {match.awayTeam.name}
+                    </p>
                     </div>
-                    <p className="mt-4 text-xs text-gray-400">
-                      {new Date(match.startDate).toLocaleString('fr-BE', {
+
+                    <div className="text-right">
+                    {isFinished ? (
+                        <div className="space-y-2 text-xl font-black text-white">
+                        <p>{match.homeScore}</p>
+                        <p>{match.awayScore}</p>
+                        </div>
+                    ) : (
+                        <span className="text-lg font-black text-gray-500">
+                        VS
+                        </span>
+                    )}
+                    </div>
+                </div>
+
+                <div className="mt-4 flex items-center gap-2 border-t border-white/10 pt-4 text-xs text-gray-400">
+                    <CalendarDays size={15} />
+
+                    <span>
+                    {new Date(match.startDate).toLocaleString('fr-BE', {
                         dateStyle: 'medium',
                         timeStyle: 'short',
-                      })}
-                    </p>
-                  </div>
-                ))}
+                    })}
+                    </span>
+                </div>
+                </div>
+            )
+            })}
               </div>
             </div>
 
@@ -228,6 +326,23 @@ export default function Dashboard() {
               </div>
             </div>
           </section>
+
+                    {user && (
+            <>
+                {statsError && (
+                <p className="rounded-xl bg-red-500/10 p-4 text-red-400">
+                    {statsError}
+                </p>
+                )}
+
+                {!statsError && (
+                <PlayerStats
+                    entry={myLeaderboardEntry}
+                    results={predictionResults}
+                />
+                )}
+            </>
+            )}
 
           <section className="rounded-2xl bg-[#19232e] p-6">
             <h2 className="mb-6 text-xl font-bold">Derniers résultats</h2>
