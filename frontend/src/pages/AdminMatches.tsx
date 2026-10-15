@@ -45,6 +45,45 @@ export default function AdminMatches() {
     }
   }, [user])
 
+  function startEditing(match: Match) {
+    setEditingMatchId(match.id)
+    setHomeScore(String(match.homeScore ?? 0))
+    setAwayScore(String(match.awayScore ?? 0))
+    setError(null)
+    setSuccess(null)
+  }
+
+  async function handleSaveResult(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (editingMatchId === null || saving) return
+
+    setSaving(true)
+    setError(null)
+    setSuccess(null)
+
+    try {
+      await updateMatchResult(editingMatchId, {
+        homeScore: Number(homeScore),
+        awayScore: Number(awayScore),
+      })
+
+      const updatedMatches = await getMatches()
+      setMatches(updatedMatches)
+
+      setEditingMatchId(null)
+      setSuccess('Résultat enregistré avec succès !')
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Impossible d'enregistrer le résultat."
+      )
+    } finally {
+      setSaving(false)
+    }
+  }
+
   if (user?.role !== 'ADMIN') {
     return (
       <div className="rounded-2xl bg-[#19232e] p-6">
@@ -73,6 +112,12 @@ export default function AdminMatches() {
         </div>
       </div>
 
+      {success && (
+        <p className="rounded-xl border border-lime-400/20 bg-lime-400/10 p-4 text-lime-400">
+          {success}
+        </p>
+      )}
+
       {loading && (
         <p className="text-gray-400">
           Chargement des matchs...
@@ -85,7 +130,7 @@ export default function AdminMatches() {
         </p>
       )}
 
-      {!loading && !error && (
+      {!loading && (
         <div className="space-y-4">
           {matches.map((match) => (
             <div
@@ -133,6 +178,82 @@ export default function AdminMatches() {
               <p className="mt-4 text-center text-xs text-gray-500">
                 {new Date(match.startDate).toLocaleString('fr-BE')}
               </p>
+
+              <div className="mt-5 border-t border-white/10 pt-4">
+                {editingMatchId === match.id ? (
+                  <form
+                    onSubmit={handleSaveResult}
+                    className="space-y-4"
+                  >
+                    <p className="text-sm font-semibold text-gray-300">
+                      Saisir le résultat final
+                    </p>
+
+                    <div className="flex items-center justify-center gap-3">
+                      <input
+                        type="number"
+                        min="0"
+                        max="30"
+                        required
+                        value={homeScore}
+                        onChange={(event) =>
+                          setHomeScore(event.target.value)
+                        }
+                        aria-label={`Buts ${match.homeTeam.name}`}
+                        className="w-20 rounded-xl border border-white/10 bg-[#121a24] p-3 text-center text-xl font-bold text-white"
+                      />
+
+                      <span className="text-xl font-bold text-gray-500">
+                        -
+                      </span>
+
+                      <input
+                        type="number"
+                        min="0"
+                        max="30"
+                        required
+                        value={awayScore}
+                        onChange={(event) =>
+                          setAwayScore(event.target.value)
+                        }
+                        aria-label={`Buts ${match.awayTeam.name}`}
+                        className="w-20 rounded-xl border border-white/10 bg-[#121a24] p-3 text-center text-xl font-bold text-white"
+                      />
+                    </div>
+
+                    <div className="flex gap-3">
+                      <button
+                        type="submit"
+                        disabled={saving}
+                        className="flex-1 rounded-xl bg-lime-400 px-4 py-3 font-bold text-black disabled:opacity-50"
+                      >
+                        {saving
+                          ? 'Enregistrement...'
+                          : 'Enregistrer le résultat'}
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={saving}
+                        onClick={() => setEditingMatchId(null)}
+                        className="rounded-xl border border-white/10 px-4 py-3 text-gray-300 hover:bg-white/5"
+                      >
+                        Annuler
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => startEditing(match)}
+                    className="w-full rounded-xl border border-lime-400/30 px-4 py-3 text-sm font-semibold text-lime-400 hover:bg-lime-400/10"
+                  >
+                    {match.status === 'FINISHED'
+                      ? 'Modifier le résultat'
+                      : 'Saisir le résultat'}
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
