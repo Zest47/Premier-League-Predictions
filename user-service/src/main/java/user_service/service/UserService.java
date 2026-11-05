@@ -31,7 +31,7 @@ public class UserService {
             String email,
             String password) {
 
-        if (userRepository.existsByUsername(username)) {
+        if (userRepository.existsByUsernameIgnoreCase(username)) {
             throw new IllegalArgumentException("Username already exists");
         }
 
@@ -65,7 +65,7 @@ public class UserService {
      * Recherche un utilisateur par son username.
      */
     public Optional<User> findByUsername(String username) {
-        return userRepository.findByUsername(username);
+        return userRepository.findByUsernameIgnoreCase(username);
     }
 
     /**

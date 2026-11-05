@@ -1,3 +1,4 @@
+
 package user_service.service;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -6,7 +7,6 @@ import org.springframework.stereotype.Service;
 import user_service.entity.User;
 import user_service.exception.InvalidCredentialsException;
 import user_service.repository.UserRepository;
-import user_service.dto.LoginResponse;
 
 @Service
 public class AuthService {
@@ -27,7 +27,7 @@ public class AuthService {
 
     public String login(String username, String password) {
 
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByUsernameIgnoreCase(username)
                 .orElseThrow(() ->
                         new InvalidCredentialsException(
                                 "Invalid username or password"
