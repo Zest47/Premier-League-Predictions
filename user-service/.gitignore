@@ -31,3 +31,34 @@ build/
 
 ### VS Code ###
 .vscode/
+
+
+# Java / Maven
+**/target/
+**/.mvn/wrapper/maven-wrapper.jar
+
+# Frontend
+**/node_modules/
+**/dist/
+**/coverage/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+application-local.properties
+application-local.yml
+application-local.yaml
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
