@@ -55,7 +55,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // Évite de réauthentifier une requête déjà authentifiée
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                User user = userRepository.findByUsername(username)
+                User user = userRepository.findByUsernameIgnoreCase(username)
                         .orElse(null);
 
                 if (user != null && jwtService.isTokenValid(token, username)) {

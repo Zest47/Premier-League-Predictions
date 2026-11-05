@@ -34,7 +34,7 @@ public class AuthController {
                 request.getPassword()
         );
 
-        User user = userRepository.findByUsername(request.getUsername())
+        User user = userRepository.findByUsernameIgnoreCase(request.getUsername())
                 .orElseThrow();
 
         LoginResponse response = new LoginResponse(
