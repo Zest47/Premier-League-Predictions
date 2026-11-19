@@ -110,6 +110,16 @@ export default function Login() {
           </button>
         </form>
 
+        <div className="mt-6 text-center text-sm text-gray-400">
+          Pas encore de compte ?{' '}
+          <Link
+            to="/register"
+            className="font-semibold text-lime-400 hover:text-lime-300"
+          >
+            Créer un compte
+          </Link>
+        </div>
+
         <div className="mt-6 text-center">
           <Link
             to="/"

@@ -10,6 +10,7 @@ import Predictions from './pages/Predictions'
 import Leaderboard from './pages/Leaderboard'
 import Login from './pages/Login'
 import AdminMatches from './pages/AdminMatches'
+import Register from './pages/Register'
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
           <Route element={<Layout />}>
             <Route path="/" element={<Dashboard />} />

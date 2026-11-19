@@ -6,11 +6,13 @@ interface Context {
 export const onRequest = async (context: Context): Promise<Response> => {
   const incomingUrl = new URL(context.request.url)
 
-  const isAuthRequest =
+  const isUserServiceRequest =
     incomingUrl.pathname === '/api/auth' ||
-    incomingUrl.pathname.startsWith('/api/auth/')
+    incomingUrl.pathname.startsWith('/api/auth/') ||
+    incomingUrl.pathname === '/api/users' ||
+    incomingUrl.pathname.startsWith('/api/users/')
 
-  const targetOrigin = isAuthRequest
+  const targetOrigin = isUserServiceRequest
     ? 'https://plp-user-service.onrender.com'
     : 'https://plp-prediction-service.onrender.com'
 

@@ -9,6 +9,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.http.HttpMethod;
 
 @Configuration
 @EnableWebSecurity
@@ -42,12 +43,16 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
 
                 // Inscription publique
-                .requestMatchers("/api/users").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
 
-                // Login public
-                .requestMatchers("/api/auth/login").permitAll()
+                // Connexion publique
+                .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
 
-                // Tout le reste nécessite un JWT
+                // Consultation des utilisateurs réservée aux administrateurs
+                .requestMatchers(HttpMethod.GET, "/api/users", "/api/users/**")
+                    .hasRole("ADMIN")
+
+                // Toutes les autres requêtes nécessitent un JWT
                 .anyRequest().authenticated()
             )
 
