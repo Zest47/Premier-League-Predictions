@@ -1,6 +1,11 @@
 
+interface Env {
+  PLP_PROXY_SECRET?: string
+}
+
 interface Context {
   request: Request
+  env: Env
 }
 
 export const onRequest = async (context: Context): Promise<Response> => {
@@ -22,8 +27,22 @@ export const onRequest = async (context: Context): Promise<Response> => {
   )
 
   const headers = new Headers(context.request.headers)
+
   headers.delete('host')
   headers.delete('cookie')
+
+  // Ne jamais transmettre les en-têtes d'identification fournis par le client.
+  headers.delete('X-PLP-Proxy-Secret')
+  headers.delete('X-PLP-Client-IP')
+
+  if (isUserServiceRequest && context.env.PLP_PROXY_SECRET) {
+    const clientIp = context.request.headers.get('CF-Connecting-IP')
+
+    if (clientIp) {
+      headers.set('X-PLP-Proxy-Secret', context.env.PLP_PROXY_SECRET)
+      headers.set('X-PLP-Client-IP', clientIp)
+    }
+  }
 
   const upstreamRequest = new Request(targetUrl.toString(), {
     method: context.request.method,
